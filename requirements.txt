@@ -4,3 +4,4 @@ lime
 joblib
 matplotlib
 pillow
+lightgbm
