@@ -1,4 +1,4 @@
-@st.fragment
+@st.experimental_fragment
 def para_input(model, explainer, explainer2, ct):
     st.header("请在下方输入相应指标👇", anchor=False)
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
@@ -54,7 +54,7 @@ def para_input(model, explainer, explainer2, ct):
         with ct:
             main(model, explainer, explainer2)
 
-@st.fragment
+@st.experimental_fragment
 def main(model, explainer, explainer2):
     if True:
         fire_type = model.predict(st.session_state["features"])
