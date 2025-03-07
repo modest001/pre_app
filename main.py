@@ -1,4 +1,11 @@
-@st.fragment
+import streamlit as st
+import shap
+import lime
+import lime.lime_tabular
+import joblib
+import pandas as pd
+import matplotlib.pyplot as plt
+
 def para_input(model, explainer, explainer2, ct):
     st.header("四川云南省森林火灾预测", anchor=False)
     
@@ -49,7 +56,6 @@ def para_input(model, explainer, explainer2, ct):
             main(model, explainer, explainer2)
 
 
-@st.fragment
 def main(model, explainer, explainer2):
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
                     'Da_MAXGST', 'Elevation', 'Slope', 'Aspect', 'TWI', 'Dis_to_railway', 'Dis_to_road', 
