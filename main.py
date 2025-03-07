@@ -98,7 +98,7 @@ def main(model, explainer, explainer2):
             st.success(f'### 预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）')
             
             # SHAP和LIME解释
-            st.header("三. SHAP和LIME局部解释")
+            st.header("三. SHAP和LIME局部解释",anchor=False)
             col1, col2 = st.columns([1, 1])
             
             with col1:
