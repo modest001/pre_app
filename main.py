@@ -186,14 +186,55 @@ if __name__ == "__main__":
     # 缓存模型加载（解决界面变灰问题）
     @st.cache_resource
     def load_resources():
+        # 加载模型
         model = joblib.load('lgbml.pkl')
+        
+        # 加载并预处理数据
         data1 = pd.read_excel('./数据删.xls')
-        # 数据预处理...
+        columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
+        X = data1.drop(columns=columns_to_drop)
+        
+        # 确保列名与前端输入完全一致
+        X = X.rename(columns={
+            'TEM': 'Da_AVGTEM',
+            'PRE': 'Da_PRE',
+            'WIN': 'Da_AVGWIN',
+            'PRS': 'Da_AVGPRS',
+            'RHU': 'Da_AVGRH',
+            'WINMAX': 'Da_MAXWIN',
+            'GSTMAX': 'Da_MAXGST',
+            '高程': 'Elevation',
+            '坡度': 'Slope',
+            '坡向': 'Aspect',
+            '铁路欧': 'Dis_to_railway',
+            '公路欧': 'Dis_to_road',
+            '居民欧': 'Dis_to_sett',
+            '平均人': 'Den_pop',
+            '平均gdp': 'GDP',
+            'forest': 'Forest',
+            'twi': 'TWI'
+        })
+        
+        # 转换为numpy数组
+        training_data = X.values
+        
+        # 创建解释器
         explainer = shap.TreeExplainer(model)
-        explainer2 = lime.lime_tabular.LimeTabularExplainer(...)
+        explainer2 = lime.lime_tabular.LimeTabularExplainer(
+            training_data=training_data,
+            feature_names=X.columns.tolist(),
+            class_names=['No Fire', 'Fire'],
+            mode='classification',
+            discretize_continuous=True
+        )
+        
         return model, explainer, explainer2
     
-    model, explainer, explainer2 = load_resources()
+    try:
+        model, explainer, explainer2 = load_resources()
+    except Exception as e:
+        st.error(f"资源加载失败: {str(e)}")
+        st.stop()
     
     # 页面布局
     main_container = st.container()
