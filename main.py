@@ -55,43 +55,47 @@ def para_input(model, explainer, explainer2, ct):
 
 @st.fragment
 def main(model, explainer, explainer2):
-    feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
-                    'Da_MAXGST', 'Elevation', 'Slope', 'Aspect', 'TWI', 'Dis_to_railway', 'Dis_to_road', 
-                    'Dis_to_sett', 'Den_pop', 'GDP', 'Forest']
+    # 页面标题和简介
+    st.title("四川云南省森林火灾预测", anchor=False)
+    
+    # 简介部分
+    st.subheader("一、关于模型", anchor=False)
+    st.write("模型的预测结果显示，ROC曲线下面积AUC为0.962，表明该模型具有良好的预测性能。")
+    
+    st.subheader("二、实时预测", anchor=False)
     if True:
+        # 预测结果显示
         fire_type = model.predict(st.session_state["features"])
         predicted_proba = model.predict_proba(st.session_state["features"])[0]
         types = ["不发生火灾", "发生火灾"]
-        c1, c2 = st.columns([1,1])
-        with c1:
-            st.subheader("预测结果", anchor=False)
-            st.write(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
-        with c2:
-            st.subheader("SHAP依赖图", anchor=False)
-            feature_choice = st.selectbox("选择变量", feature_names)
-            # img = Image.open(f'{feature_choice}.jpg')
-            # st.image(img)
+        st.write(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
 
+    # 解释部分
+    st.subheader("三、SHAP和LIME局部解释", anchor=False)
+    
+    # SHAP解释部分
+    st.markdown("#### SHAP解释")
+    shap_values = explainer.shap_values(st.session_state["features"])
+    exp = shap.Explanation(shap_values, explainer.expected_value, 
+                          st.session_state["features"], 
+                          feature_names=st.session_state["features"].columns)
+    
+    fig, _ = plt.subplots()
+    shap.waterfall_plot(exp[0], max_display=11)
+    st.pyplot(fig)
+    st.write("上图显示了SHAP力图，可用于将每个变量的SHAP值可视化为一个'力'，它可以增加（正值）或减少（负值）相对于其基线的预测，用于对单个样本预测结果的解释。")
 
-        st.subheader("SHAP局部解释", anchor=False)
-        shap_values = explainer.shap_values(st.session_state["features"])
-        exp = shap.Explanation(shap_values,explainer.expected_value, st.session_state["features"], 
-                               feature_names=st.session_state["features"].columns)
-        shap.waterfall_plot(exp[0],max_display=11)
-
-        fig, _ = plt.subplots()
-        shap.waterfall_plot(exp[0], max_display=11)
-        st.pyplot(fig)
-
-        st.subheader("LIME局部解释", anchor=False)
-        exp2 = explainer2.explain_instance(
-            data_row=st.session_state["features"].values[0],  # 用户输入的单条测试数据
-            predict_fn=model.predict_proba,  # 预测函数（返回概率值）
-            num_features=11  # 显示前 10 个最重要的特征
-            )
-        
-        fig2 = exp2.as_pyplot_figure()
-        st.pyplot(fig2)
+    # LIME解释部分
+    st.markdown("#### LIME解释")
+    exp2 = explainer2.explain_instance(
+        data_row=st.session_state["features"].values[0],
+        predict_fn=model.predict_proba,
+        num_features=11
+    )
+    
+    fig2 = exp2.as_pyplot_figure()
+    st.pyplot(fig2)
+    st.write("上图显示了LIME的局部解释图，右侧的变量（绿色）表示对火灾发生的预测为正影响，左侧的变量（红色）表示对火灾发生的预测为负影响，数值大小表示变量的重要性程度。")
 
 
 
