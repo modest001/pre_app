@@ -7,13 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def para_input(model, explainer, explainer2, ct):
-    st.header("四川云南省森林火灾预测", anchor=False)
+    # 左侧部分：输入滑块部分
+    st.header("请在下方输入相应指标👇", anchor=False)
     
-    # 添加简介部分
-    st.subheader("一.关于模型")
-    st.write("模型的预测结果显示，ROC曲线下的面积AUC为0.962，表明该模型具有良好的预测性能。")
-
-    st.subheader("二.实时预测")
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
                     'Da_MAXGST', 'Elevation', 'Slope', 'Aspect', 'TWI', 'Dis_to_railway', 'Dis_to_road', 
                     'Dis_to_sett', 'Den_pop', 'GDP', 'Forest']
@@ -57,6 +53,12 @@ def para_input(model, explainer, explainer2, ct):
 
 
 def main(model, explainer, explainer2):
+    # 右侧简介部分
+    st.sidebar.header("四川云南省森林火灾预测")
+    st.sidebar.subheader("一.关于模型")
+    st.sidebar.write("模型的预测结果显示，ROC曲线下的面积AUC为0.962，表明该模型具有良好的预测性能。")
+    
+    st.sidebar.subheader("二.实时预测")
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
                     'Da_MAXGST', 'Elevation', 'Slope', 'Aspect', 'TWI', 'Dis_to_railway', 'Dis_to_road', 
                     'Dis_to_sett', 'Den_pop', 'GDP', 'Forest']
@@ -64,26 +66,15 @@ def main(model, explainer, explainer2):
     fire_type = model.predict(st.session_state["features"])
     predicted_proba = model.predict_proba(st.session_state["features"])[0]
     types = ["不发生火灾", "发生火灾"]
-    
+
+    st.sidebar.subheader("三.SHAP和LIME局部解释")
+    # 预测结果展示
     c1, c2 = st.columns([1,1])
     with c1:
         st.subheader("预测结果", anchor=False)
         st.write(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
     
-    with c2:
-        st.subheader("SHAP局部解释", anchor=False)
-        shap_values = explainer.shap_values(st.session_state["features"])
-        exp = shap.Explanation(shap_values, explainer.expected_value, st.session_state["features"], 
-                               feature_names=st.session_state["features"].columns)
-        shap.waterfall_plot(exp[0], max_display=11)
-
-        # 显示SHAP解释文字
-        st.write("上图显示了SHAP 力图可用于将每个变量的SHAP值可视化为一个力，它可以增加(正值)或减少(负值)相对于其基线的预测，用于对单个预测的解释。")
-        
-        fig, _ = plt.subplots()
-        shap.waterfall_plot(exp[0], max_display=11)
-        st.pyplot(fig)
-
+    # 只展示LIME图，不展示SHAP依赖图
     st.subheader("LIME局部解释", anchor=False)
     exp2 = explainer2.explain_instance(
         data_row=st.session_state["features"].values[0],
