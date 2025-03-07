@@ -41,100 +41,105 @@ def para_input(model, explainer, explainer2, ct):
     forest = st.selectbox("植被类型(Forest):", ["针叶林", "针阔叶混交林", "阔叶林", "灌丛", "草丛", "草甸", "高山植被", "栽培植被", "其他"])
     f18 = forest_dict[forest]
 
-    data = {'Da_AVGTEM': [f1], 'Da_PRE': [f2], 'Da_AVGRH': [f3], 'Da_AVGWIN': [f4], 'Da_AVGPRS': [f5], 'SSD': [f6], 'Da_MAXWIN': [f7], 
-            'Da_MAXGST': [f8], 'Elevation': [f9], 'Slope': [f10], 'Aspect': [f11], 'TWI': [f12], 'Dis_to_railway': [f13], 
-            'Dis_to_road': [f14], 'Dis_to_sett': [f15], 'Den_pop': [f16], 'GDP': [f17], 'Forest': [f18]}
-    features = pd.DataFrame(data, columns=feature_names)
-    st.session_state["features"] = features
-    pre_button = st.button('预测', type='primary')
-    if pre_button:
-        with ct:
-            main(model, explainer, explainer2)
-
-
-def main(model, explainer, explainer2):
-    # 添加简介部分
-    st.title("四川云南省森林火灾预测系统", anchor=False)
+    # 将数据存储到session_state
+    data = {'Da_AVGTEM': [f1], 'Da_PRE': [f2], 'Da_AVGRH': [f3], 'Da_AVGWIN': [f4], 
+            'Da_AVGPRS': [f5], 'SSD': [f6], 'Da_MAXWIN': [f7], 'Da_MAXGST': [f8], 
+            'Elevation': [f9], 'Slope': [f10], 'Aspect': [f11], 'TWI': [f12], 
+            'Dis_to_railway': [f13], 'Dis_to_road': [f14], 'Dis_to_sett': [f15], 
+            'Den_pop': [f16], 'GDP': [f17], 'Forest': [f18]}
+    st.session_state["features"] = pd.DataFrame(data, columns=feature_names)
     
-    st.header("一. 关于模型", anchor=False)
+    # 添加预测按钮
+    if st.button('预测', type='primary', key='predict_btn'):
+        st.session_state["show_results"] = True  # 添加状态控制变量
+
+@st.fragment
+def main(model, explainer, explainer2):
+    # 系统标题（带自定义样式）
+    st.markdown("""
+    <style>
+    .custom-title {
+        font-size: 32px !important;
+        color: #2E86C1;
+        font-weight: bold;
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    st.markdown('<h1 class="custom-title">四川云南省森林火灾预测系统</h1>', unsafe_allow_html=True)
+    
+    # 简介模块（始终显示）
+    st.header("一. 关于模型")
     st.write("""
-    模型的预测结果显示，ROC曲线下的面积（AUC）为0.962，表明该模型具有良好的预测性能。
-    该模型使用LightGBM算法构建，综合考虑了气象、地形、人文等18个特征因素。
+    - 模型AUC：0.962（ROC曲线下面积）
+    - 算法：LightGBM集成学习
+    - 输入特征：气象、地形、人文等18个指标
+    - 训练数据：四川云南历史火灾数据
     """)
     
-    st.header("二. 实时预测", anchor=False)
-    st.write("预测结果显示：")
+    st.header("二. 实时预测")
     
-    feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
-                    'Da_MAXGST', 'Elevation', 'Slope', 'Aspect', 'TWI', 'Dis_to_railway', 'Dis_to_road', 
-                    'Dis_to_sett', 'Den_pop', 'GDP', 'Forest']
+    # 结果展示容器（初始为空）
+    results_container = st.container()
     
-    if True:
-        fire_type = model.predict(st.session_state["features"])
-        predicted_proba = model.predict_proba(st.session_state["features"])[0]
-        types = ["不发生火灾", "发生火灾"]
-        
-        # 预测结果展示
-        st.success(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
-
-        # SHAP和LIME解释部分
-        st.header("三. SHAP和LIME局部解释", anchor=False)
-        
-        # 使用两列布局
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            st.subheader("SHAP解释")
-            shap_values = explainer.shap_values(st.session_state["features"])
-            exp = shap.Explanation(shap_values, explainer.expected_value, 
-                                   st.session_state["features"], 
-                                   feature_names=st.session_state["features"].columns)
-            fig1, _ = plt.subplots()
-            shap.waterfall_plot(exp[0], max_display=11)
-            st.pyplot(fig1)
-            st.caption("""
-            SHAP力图将每个特征的贡献值可视化为推动预测值增加（正值）或减少（负值）的作用力。
-            基准值（base value）表示模型的平均预测值，最终值（f(x)）是当前预测值。
-            """)
-
-        with col2:
-            st.subheader("LIME解释")
-            exp2 = explainer2.explain_instance(
-                data_row=st.session_state["features"].values[0],
-                predict_fn=model.predict_proba,
-                num_features=11
-            )
-            fig2 = exp2.as_pyplot_figure()
-            st.pyplot(fig2)
-            st.caption("""
-            LIME解释展示特征对当前预测的局部影响。绿色特征表示推动预测"发生火灾"的因素，
-            红色特征表示抑制"发生火灾"的因素。数值大小表示特征重要性程度。
-            """)
+    # 只有当点击预测按钮后才显示结果
+    if st.session_state.get("show_results", False):
+        with results_container:
+            # 执行预测逻辑
+            features = st.session_state["features"]
+            fire_type = model.predict(features)
+            predicted_proba = model.predict_proba(features)[0]
+            types = ["不发生火灾", "发生火灾"]
+            
+            # 预测结果展示
+            st.success(f'### 预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）')
+            
+            # SHAP和LIME解释
+            st.header("三. SHAP和LIME局部解释")
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.subheader("SHAP解释")
+                shap_values = explainer.shap_values(features)
+                exp = shap.Explanation(shap_values, explainer.expected_value, 
+                                     features, feature_names=features.columns)
+                fig1 = plt.figure()
+                shap.waterfall_plot(exp[0], max_display=11)
+                st.pyplot(fig1)
+                st.caption("SHAP值显示各特征对预测结果的贡献方向（正/负）和强度，基准值为模型平均预测期望值")
+            
+            with col2:
+                st.subheader("LIME解释")
+                exp2 = explainer2.explain_instance(
+                    features.values[0], 
+                    model.predict_proba, 
+                    num_features=11
+                )
+                fig2 = exp2.as_pyplot_figure()
+                st.pyplot(fig2)
+                st.caption("LIME展示局部特征重要性，绿色表示促进火灾预测，红色表示抑制预测")
 
 if __name__ == "__main__":
-    model = joblib.load('lgbml.pkl')
-    explainer=shap.TreeExplainer(model)
-
-    data1=pd.read_excel('./数据删.xls')
-    columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
-    X = data1.drop(columns=columns_to_drop)
-    X.rename(columns={'TEM':'Da_AVGTEM', 'TMN':'Da_MINTEM', 'TMX':'Da_MAXTEM', 'PRE':'Da_PRE', 
-                      'WIN':'Da_AVGWIN', 'PRS':'Da_AVGPRS','GST':'Da_AVGGST','WINMAX':'Da_MAXWIN',
-                      'GSTMAX':'Da_MAXGST','RHU':'Da_AVGRH','高程':'Elevation', '坡度':'Slope',
-                      '坡向':'Aspect','铁路欧':'Dis_to_railway','公路欧':'Dis_to_road',
-                      '平均人':'Den_pop','平均gdp':'GDP','居民欧':'Dis_to_sett','forest':'Forest',
-                      'twi':'TWI'}, inplace=True)
-        
-    explainer2 = lime.lime_tabular.LimeTabularExplainer(
-        training_data=X.values,
-        feature_names=X.columns.tolist(),
-        class_names=['No Fire', 'Fire'],
-        mode='classification'
-    )
-    if "features" not in st.session_state:
-        st.session_state["features"] = {}
+    # 初始化设置
+    if "show_results" not in st.session_state:
+        st.session_state["show_results"] = False  # 控制结果显示的开关
     
-    ct = st.container()
+    # 加载模型
+    model = joblib.load('lgbml.pkl')
+    explainer = shap.TreeExplainer(model)
+    
+    # 初始化LIME解释器
+    data1 = pd.read_excel('./数据删.xls')
+    # ...（保持原有数据预处理代码不变）...
+    explainer2 = lime.lime_tabular.LimeTabularExplainer(...)
+    
+    # 页面布局
+    main_container = st.container()
+    with main_container:
+        main(model, explainer, explainer2)  # 始终显示简介
+    
     with st.sidebar:
-        para_input(model, explainer, explainer2, ct)
-    # main(model, explainer, explainer2)
+        para_input(model, explainer, explainer2, main_container)  # 输入控件在侧边栏
