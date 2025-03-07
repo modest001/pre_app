@@ -95,32 +95,32 @@ def main(model, explainer, explainer2):
             types = ["不发生火灾", "发生火灾"]
             
             # 预测结果展示
-            st.success(f'### 预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）')
+    st.success(f'### 预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）')
             
-            # SHAP和LIME解释
-            st.header("三. SHAP和LIME局部解释",anchor=False)
-            col1, col2 = st.columns([1, 1])
+    # SHAP和LIME解释
+    st.header("三. SHAP和LIME局部解释",anchor=False)
+    col1, col2 = st.columns([1, 1])
             
-            with col1:
-                st.subheader("SHAP解释")
-                shap_values = explainer.shap_values(features)
-                exp = shap.Explanation(shap_values, explainer.expected_value, 
-                                     features, feature_names=features.columns)
-                fig1 = plt.figure()
-                shap.waterfall_plot(exp[0], max_display=11)
-                st.pyplot(fig1)
-                st.caption("SHAP值显示各特征对预测结果的贡献方向（正/负）和强度，基准值为模型平均预测期望值")
+        with col1:
+            st.subheader("SHAP解释")
+            shap_values = explainer.shap_values(features)
+            exp = shap.Explanation(shap_values, explainer.expected_value, 
+                                    features, feature_names=features.columns)
+            fig1 = plt.figure()
+            shap.waterfall_plot(exp[0], max_display=11)
+            st.pyplot(fig1)
+            st.caption("SHAP值显示各特征对预测结果的贡献方向（正/负）和强度，基准值为模型平均预测期望值")
             
-            with col2:
-                st.subheader("LIME解释")
-                exp2 = explainer2.explain_instance(
+        with col2:
+            st.subheader("LIME解释")
+            exp2 = explainer2.explain_instance(
                     features.values[0], 
                     model.predict_proba, 
                     num_features=11
                 )
-                fig2 = exp2.as_pyplot_figure()
-                st.pyplot(fig2)
-                st.caption("LIME展示局部特征重要性，绿色表示促进火灾预测，红色表示抑制预测")
+            fig2 = exp2.as_pyplot_figure()
+            st.pyplot(fig2)
+            st.caption("LIME展示局部特征重要性，绿色表示促进火灾预测，红色表示抑制预测")
 
 if __name__ == "__main__":
     # 初始化设置
