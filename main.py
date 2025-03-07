@@ -133,7 +133,14 @@ if __name__ == "__main__":
     
     # 初始化LIME解释器
     data1 = pd.read_excel('./数据删.xls')
-    # ...（保持原有数据预处理代码不变）...
+    columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
+    X = data1.drop(columns=columns_to_drop)
+    X.rename(columns={'TEM':'Da_AVGTEM', 'TMN':'Da_MINTEM', 'TMX':'Da_MAXTEM', 'PRE':'Da_PRE', 
+                      'WIN':'Da_AVGWIN', 'PRS':'Da_AVGPRS','GST':'Da_AVGGST','WINMAX':'Da_MAXWIN',
+                      'GSTMAX':'Da_MAXGST','RHU':'Da_AVGRH','高程':'Elevation', '坡度':'Slope',
+                      '坡向':'Aspect','铁路欧':'Dis_to_railway','公路欧':'Dis_to_road',
+                      '平均人':'Den_pop','平均gdp':'GDP','居民欧':'Dis_to_sett','forest':'Forest',
+                      'twi':'TWI'}, inplace=True)
     explainer2 = lime.lime_tabular.LimeTabularExplainer(...)
     
     # 页面布局
