@@ -98,7 +98,7 @@ def main(model, explainer, explainer2):
     st.success(f'### 预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）')
             
     # SHAP和LIME解释
-    st.header("三. SHAP和LIME局部解释",anchor=False)
+    st.header("三. SHAP和LIME局部解释")
     col1, col2 = st.columns([1, 1])
             
         with col1:
@@ -114,14 +114,14 @@ def main(model, explainer, explainer2):
         with col2:
             st.subheader("LIME解释")
             exp2 = explainer2.explain_instance(
-                    features.values[0], 
-                    model.predict_proba, 
-                    num_features=11
+                features.values[0], 
+                model.predict_proba, 
+                num_features=11
                 )
             fig2 = exp2.as_pyplot_figure()
             st.pyplot(fig2)
             st.caption("LIME展示局部特征重要性，绿色表示促进火灾预测，红色表示抑制预测")
-
+                
 if __name__ == "__main__":
     # 初始化设置
     if "show_results" not in st.session_state:
