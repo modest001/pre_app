@@ -55,76 +55,123 @@ def para_input(model, explainer, explainer2, ct):
 
 @st.fragment
 def main(model, explainer, explainer2):
-    # 页面标题和简介
+    # ==================== 页面标题 ====================
     st.title("四川云南省森林火灾预测", anchor=False)
     
-    # 简介部分
-    st.subheader("一、关于模型", anchor=False)
-    st.write("模型的预测结果显示，ROC曲线下面积AUC为0.962，表明该模型具有良好的预测性能。")
-    
-    st.subheader("二、实时预测", anchor=False)
-    if True:
-        # 预测结果显示
-        fire_type = model.predict(st.session_state["features"])
-        predicted_proba = model.predict_proba(st.session_state["features"])[0]
-        types = ["不发生火灾", "发生火灾"]
-        st.write(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
+    # ==================== 模型简介部分 ====================
+    st.header("一、关于模型", anchor=False)
+    st.markdown("""
+    - 基于LightGBM的机器学习模型
+    - **ROC曲线下面积AUC为0.962**，表明模型具有优秀的预测性能
+    - 使用SHAP和LIME双解释框架
+    - 训练数据涵盖18个地理气候特征
+    """)
 
-    # 解释部分
-    st.subheader("三、SHAP和LIME局部解释", anchor=False)
+    # ==================== 实时预测部分 ====================
+    st.header("二、实时预测", anchor=False)
     
+    # 确保特征数据已初始化
+    if "features" not in st.session_state:
+        st.error("请先在侧边栏输入特征数据")
+        return
+
+    # 执行预测
+    fire_type = model.predict(st.session_state["features"])
+    predicted_proba = model.predict_proba(st.session_state["features"])[0]
+    types = ["不发生火灾", "发生火灾"]
+    
+    # 使用卡片式布局展示结果
+    with st.container(border=True):
+        col_result, col_prob = st.columns(2)
+        with col_result:
+            st.metric("预测结论", types[fire_type[0]])
+        with col_prob:
+            st.metric("置信概率", f"{predicted_proba[fire_type[0]]:.2%}")
+
+    # ==================== 双解释器布局 ====================
+    st.header("三、SHAP和LIME局部解释", anchor=False)
+    
+    # 创建并排的列布局
+    col_shap, col_lime = st.columns(2, gap="large")
+
     # SHAP解释部分
-    st.markdown("#### SHAP解释")
-    shap_values = explainer.shap_values(st.session_state["features"])
-    exp = shap.Explanation(shap_values, explainer.expected_value, 
-                          st.session_state["features"], 
-                          feature_names=st.session_state["features"].columns)
-    
-    fig, _ = plt.subplots()
-    shap.waterfall_plot(exp[0], max_display=11)
-    st.pyplot(fig)
-    st.write("上图显示了SHAP力图，可用于将每个变量的SHAP值可视化为一个'力'，它可以增加（正值）或减少（负值）相对于其基线的预测，用于对单个样本预测结果的解释。")
+    with col_shap:
+        st.subheader("SHAP解释", anchor=False)
+        with st.spinner("生成SHAP解释..."):
+            shap_values = explainer.shap_values(st.session_state["features"])
+            exp = shap.Explanation(
+                shap_values,
+                explainer.expected_value,
+                st.session_state["features"],
+                feature_names=st.session_state["features"].columns
+            )
+            fig1, _ = plt.subplots(figsize=(8, 6))
+            shap.waterfall_plot(exp[0], max_display=11, show=False)
+            st.pyplot(fig1)
+        st.caption("""
+        **解读说明**：  
+        - 红色特征：提升火灾风险的主要因素  
+        - 蓝色特征：降低火灾风险的保护因素  
+        - 基准值：模型预测的平均基准风险值（f(x) = {:.2f}）
+        """.format(explainer.expected_value))
 
     # LIME解释部分
-    st.markdown("#### LIME解释")
-    exp2 = explainer2.explain_instance(
-        data_row=st.session_state["features"].values[0],
-        predict_fn=model.predict_proba,
-        num_features=11
-    )
-    
-    fig2 = exp2.as_pyplot_figure()
-    st.pyplot(fig2)
-    st.write("上图显示了LIME的局部解释图，右侧的变量（绿色）表示对火灾发生的预测为正影响，左侧的变量（红色）表示对火灾发生的预测为负影响，数值大小表示变量的重要性程度。")
-
-
-
+    with col_lime:
+        st.subheader("LIME解释", anchor=False)
+        with st.spinner("生成LIME解释..."):
+            exp2 = explainer2.explain_instance(
+                data_row=st.session_state["features"].values[0],
+                predict_fn=model.predict_proba,
+                num_features=11
+            )
+            fig2 = exp2.as_pyplot_figure()
+            plt.tight_layout()
+            st.pyplot(fig2)
+        st.caption("""
+        **解读说明**：  
+        - → 绿色特征：促进火灾发生的正相关因素  
+        - ← 红色特征：抑制火灾发生的负相关因素  
+        - 数值大小：表示特征影响程度  
+        - 预测概率：本地模型拟合结果
+        """)
 
 if __name__ == "__main__":
+    # 模型初始化
     model = joblib.load('lgbml.pkl')
-    explainer=shap.TreeExplainer(model)
-
-    data1=pd.read_excel('./数据删.xls')
+    
+    # SHAP解释器初始化
+    explainer = shap.TreeExplainer(model)
+    
+    # LIME解释器初始化
+    data1 = pd.read_excel('./数据删.xls')
     columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
     X = data1.drop(columns=columns_to_drop)
-    X.rename(columns={'TEM':'Da_AVGTEM', 'TMN':'Da_MINTEM', 'TMX':'Da_MAXTEM', 'PRE':'Da_PRE', 
-                      'WIN':'Da_AVGWIN', 'PRS':'Da_AVGPRS','GST':'Da_AVGGST','WINMAX':'Da_MAXWIN',
-                      'GSTMAX':'Da_MAXGST','RHU':'Da_AVGRH','高程':'Elevation', '坡度':'Slope',
-                      '坡向':'Aspect','铁路欧':'Dis_to_railway','公路欧':'Dis_to_road',
-                      '平均人':'Den_pop','平均gdp':'GDP','居民欧':'Dis_to_sett','forest':'Forest',
-                      'twi':'TWI'}, inplace=True)
-        
+    X.rename(columns={
+        'TEM':'Da_AVGTEM', 'TMN':'Da_MINTEM', 'TMX':'Da_MAXTEM',
+        'PRE':'Da_PRE', 'WIN':'Da_AVGWIN', 'PRS':'Da_AVGPRS',
+        'GST':'Da_AVGGST','WINMAX':'Da_MAXWIN','GSTMAX':'Da_MAXGST',
+        'RHU':'Da_AVGRH','高程':'Elevation', '坡度':'Slope',
+        '坡向':'Aspect','铁路欧':'Dis_to_railway','公路欧':'Dis_to_road',
+        '平均人':'Den_pop','平均gdp':'GDP','居民欧':'Dis_to_sett',
+        'forest':'Forest','twi':'TWI'
+    }, inplace=True)
+    
     explainer2 = lime.lime_tabular.LimeTabularExplainer(
         training_data=X.values,
         feature_names=X.columns.tolist(),
         class_names=['No Fire', 'Fire'],
-        mode='classification'
+        mode='classification',
+        verbose=True
     )
-    if "features" not in st.session_state:
-        st.session_state["features"] = {}
-    
-    ct = st.container()
-    with st.sidebar:
-        para_input(model, explainer, explainer2, ct)
-    # main(model, explainer, explainer2)
 
+    # 初始化特征数据
+    if "features" not in st.session_state:
+        # 设置默认示例数据
+        default_features = X.iloc[[0]].copy()
+        st.session_state["features"] = default_features
+    
+    # 页面布局
+    with st.container():
+        main(model, explainer, explainer2)
+    with st.sidebar:
+        para_input(model, explainer, explainer2)  # 确保此函数正确初始化特征
