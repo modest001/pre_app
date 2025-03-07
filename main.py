@@ -54,15 +54,15 @@ def para_input(model, explainer, explainer2, ct):
 
 def main(model, explainer, explainer2):
     # 添加简介部分
-    st.title("四川云南省森林火灾预测系统")
+    st.title("四川云南省森林火灾预测系统", anchor=False)
     
-    st.header("一. 关于模型")
+    st.header("一. 关于模型", anchor=False)
     st.write("""
     模型的预测结果显示，ROC曲线下的面积（AUC）为0.962，表明该模型具有良好的预测性能。
     该模型使用LightGBM算法构建，综合考虑了气象、地形、人文等18个特征因素。
     """)
     
-    st.header("二. 实时预测")
+    st.header("二. 实时预测", anchor=False)
     st.write("预测结果显示：")
     
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
@@ -78,7 +78,7 @@ def main(model, explainer, explainer2):
         st.success(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
 
         # SHAP和LIME解释部分
-        st.header("三. SHAP和LIME局部解释")
+        st.header("三. SHAP和LIME局部解释", anchor=False)
         
         # 使用两列布局
         col1, col2 = st.columns([1, 1])
