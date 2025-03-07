@@ -1,14 +1,51 @@
-import streamlit as st
-import shap
-import lime
-import lime.lime_tabular
 import joblib
 import pandas as pd
+import streamlit as st
+import shap
 import matplotlib.pyplot as plt
+import lime
+from PIL import Image
 
+# 自定义CSS样式（放在最前面）
+st.markdown("""
+<style>
+/* 主标题样式 */
+.custom-main-title {
+    font-size: 36px !important;
+    color: #2E86C1;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+}
 
+/* 二级标题样式（侧边栏标题和章节标题） */
+.custom-sub-title {
+    font-size: 28px !important;
+    color: #2ECC71;
+    border-bottom: 2px solid #F4D03F;
+    padding-bottom: 5px;
+    margin-top: 25px !important;
+}
+
+/* 内容文本样式 */
+.content-text {
+    font-size: 16px !important;  /* 与滑块字体一致 */
+    line-height: 1.6;
+}
+
+/* 图表容器样式 */
+.plot-container {
+    border: 1px solid #D5D8DC;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+</style>
+""", unsafe_allow_html=True)
+@st.fragment
 def para_input(model, explainer, explainer2, ct):
-    st.header("请在下方输入相应指标👇", anchor=False)
+    # 侧边栏标题应用样式
+    st.markdown('<div class="custom-sub-title">请在下方输入相应指标👇</div>', unsafe_allow_html=True)
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
                     'Da_MAXGST', 'Elevation', 'Slope', 'Aspect', 'TWI', 'Dis_to_railway', 'Dis_to_road', 
                     'Dis_to_sett', 'Den_pop', 'GDP', 'Forest']
@@ -41,117 +78,127 @@ def para_input(model, explainer, explainer2, ct):
     forest = st.selectbox("植被类型(Forest):", ["针叶林", "针阔叶混交林", "阔叶林", "灌丛", "草丛", "草甸", "高山植被", "栽培植被", "其他"])
     f18 = forest_dict[forest]
 
-    # 将数据存储到session_state
-    data = {'Da_AVGTEM': [f1], 'Da_PRE': [f2], 'Da_AVGRH': [f3], 'Da_AVGWIN': [f4], 
-            'Da_AVGPRS': [f5], 'SSD': [f6], 'Da_MAXWIN': [f7], 'Da_MAXGST': [f8], 
-            'Elevation': [f9], 'Slope': [f10], 'Aspect': [f11], 'TWI': [f12], 
-            'Dis_to_railway': [f13], 'Dis_to_road': [f14], 'Dis_to_sett': [f15], 
-            'Den_pop': [f16], 'GDP': [f17], 'Forest': [f18]}
-    st.session_state["features"] = pd.DataFrame(data, columns=feature_names)
-    
-    # 添加预测按钮
+    data = {'Da_AVGTEM': [f1], 'Da_PRE': [f2], 'Da_AVGRH': [f3], 'Da_AVGWIN': [f4], 'Da_AVGPRS': [f5], 'SSD': [f6], 'Da_MAXWIN': [f7], 
+            'Da_MAXGST': [f8], 'Elevation': [f9], 'Slope': [f10], 'Aspect': [f11], 'TWI': [f12], 'Dis_to_railway': [f13], 
+            'Dis_to_road': [f14], 'Dis_to_sett': [f15], 'Den_pop': [f16], 'GDP': [f17], 'Forest': [f18]}
+    features = pd.DataFrame(data, columns=feature_names)
     if st.button('预测', type='primary', key='predict_btn'):
-        st.session_state["show_results"] = True  # 添加状态控制变量
+        st.session_state["show_results"] = True
+    else:
+        # 确保未点击时不显示结果
+        st.session_state["show_results"] = False
+
 
 @st.fragment
 def main(model, explainer, explainer2):
-    # 系统标题（带自定义样式）
+    # 主标题
+    st.markdown('<div class="custom-main-title">四川云南省森林火灾预测系统</div>', 
+               unsafe_allow_html=True)
+    
+    # 关于模型章节
+    st.markdown('<div class="custom-sub-title">一. 关于模型</div>', unsafe_allow_html=True)
     st.markdown("""
-    <style>
-    .custom-title {
-        font-size: 32px !important;
-        color: #2E86C1;
-        font-weight: bold;
-        text-align: center;
-        padding: 15px;
-        border-radius: 10px;
-        background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    st.markdown('<h1 class="custom-title">四川云南省森林火灾预测系统</h1>', unsafe_allow_html=True)
-    
-    # 简介模块（始终显示）
-    st.header("一. 关于模型")
-    st.write("""
-    - 模型AUC：0.962（ROC曲线下面积）
-    - 算法：LightGBM集成学习
-    - 输入特征：气象、地形、人文等18个指标
+    <div class="content-text">
+    - 模型AUC：0.962（ROC曲线下面积）<br>
+    - 算法：LightGBM集成学习<br>
+    - 输入特征：气象、地形、人文等18个指标<br>
     - 训练数据：四川云南历史火灾数据
-    """)
+    </div>
+    """, unsafe_allow_html=True)
     
-    st.header("二. 实时预测")
+    # 实时预测章节
+    st.markdown('<div class="custom-sub-title">二. 实时预测</div>', unsafe_allow_html=True)
     
-    # 结果展示容器（初始为空）
+    # 结果展示容器
     results_container = st.container()
     
-    # 只有当点击预测按钮后才显示结果
+    # 严格的结果显示控制
     if st.session_state.get("show_results", False):
         with results_container:
-            # 执行预测逻辑
-            features = st.session_state["features"]
-            fire_type = model.predict(features)
-            predicted_proba = model.predict_proba(features)[0]
-            types = ["不发生火灾", "发生火灾"]
-            
-            # 预测结果展示
-    st.success(f'### 预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）')
-            
-    # SHAP和LIME解释
-    st.header("三. SHAP和LIME局部解释")
-    col1, col2 = st.columns([1, 1])
-            
-        with col1:
-            st.subheader("SHAP解释")
-            shap_values = explainer.shap_values(features)
-            exp = shap.Explanation(shap_values, explainer.expected_value, 
-                                    features, feature_names=features.columns)
-            fig1 = plt.figure()
-            shap.waterfall_plot(exp[0], max_display=11)
-            st.pyplot(fig1)
-            st.caption("SHAP值显示各特征对预测结果的贡献方向（正/负）和强度，基准值为模型平均预测期望值")
-            
-        with col2:
-            st.subheader("LIME解释")
-            exp2 = explainer2.explain_instance(
-                features.values[0], 
-                model.predict_proba, 
-                num_features=11
-                )
-            fig2 = exp2.as_pyplot_figure()
-            st.pyplot(fig2)
-            st.caption("LIME展示局部特征重要性，绿色表示促进火灾预测，红色表示抑制预测")
+            try:
+                # 预测执行
+                features = st.session_state["features"]
+                fire_type = model.predict(features)
+                predicted_proba = model.predict_proba(features)[0]
+                types = ["不发生火灾", "发生火灾"]
                 
+                # 结果展示
+                st.success(f'<div class="content-text">预测结果：{types[fire_type[0]]}（概率：{predicted_proba[fire_type[0]]:.2f}）</div>', 
+                          unsafe_allow_html=True)
+                
+                # 解释章节
+                st.markdown('<div class="custom-sub-title">三. SHAP和LIME局部解释</div>', 
+                           unsafe_allow_html=True)
+                
+                col1, col2 = st.columns([1, 1])
+                
+                # SHAP解释
+                with col1:
+                    with st.spinner("生成SHAP解释..."):
+                        shap_values = explainer.shap_values(features)
+                        exp = shap.Explanation(shap_values, explainer.expected_value, 
+                                             features, feature_names=features.columns)
+                        fig1 = plt.figure(figsize=(10, 6))
+                        shap.waterfall_plot(exp[0], max_display=11)
+                        st.markdown('<div class="plot-container">', unsafe_allow_html=True)
+                        st.pyplot(fig1)
+                        st.markdown('</div>', unsafe_allow_html=True)
+                        plt.close()
+                        st.markdown("""
+                        <div class="content-text">
+                        SHAP值显示各特征对预测结果的贡献方向（正/负）和强度：<br>
+                        - 基准值（base value）：模型平均预测值<br>
+                        - 最终值（f(x)）：当前样本预测值
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # LIME解释
+                with col2:
+                    with st.spinner("生成LIME解释..."):
+                        exp2 = explainer2.explain_instance(
+                            features.values[0], 
+                            model.predict_proba, 
+                            num_features=11
+                        )
+                        fig2 = exp2.as_pyplot_figure()
+                        st.markdown('<div class="plot-container">', unsafe_allow_html=True)
+                        st.pyplot(fig2)
+                        st.markdown('</div>', unsafe_allow_html=True)
+                        plt.close()
+                        st.markdown("""
+                        <div class="content-text">
+                        LIME局部解释说明：<br>
+                        - 绿色特征：促进火灾预测的因素<br>
+                        - 红色特征：抑制火灾预测的因素<br>
+                        - 数值大小：特征重要性程度
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            except Exception as e:
+                st.error(f"发生错误：{str(e)}")
+                st.session_state["show_results"] = False
+
 if __name__ == "__main__":
-    # 初始化设置
+    # 初始化会话状态
     if "show_results" not in st.session_state:
-        st.session_state["show_results"] = False  # 控制结果显示的开关
+        st.session_state["show_results"] = False
     
-    # 加载模型
-    model = joblib.load('lgbml.pkl')
-    explainer = shap.TreeExplainer(model)
+    # 缓存模型加载（解决界面变灰问题）
+    @st.cache_resource
+    def load_resources():
+        model = joblib.load('lgbml.pkl')
+        data1 = pd.read_excel('./数据删.xls')
+        # 数据预处理...
+        explainer = shap.TreeExplainer(model)
+        explainer2 = lime.lime_tabular.LimeTabularExplainer(...)
+        return model, explainer, explainer2
     
-    # 初始化LIME解释器
-    data1 = pd.read_excel('./数据删.xls')
-    columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
-    X = data1.drop(columns=columns_to_drop)
-    X.rename(columns={'TEM':'Da_AVGTEM', 'TMN':'Da_MINTEM', 'TMX':'Da_MAXTEM', 'PRE':'Da_PRE', 
-                      'WIN':'Da_AVGWIN', 'PRS':'Da_AVGPRS','GST':'Da_AVGGST','WINMAX':'Da_MAXWIN',
-                      'GSTMAX':'Da_MAXGST','RHU':'Da_AVGRH','高程':'Elevation', '坡度':'Slope',
-                      '坡向':'Aspect','铁路欧':'Dis_to_railway','公路欧':'Dis_to_road',
-                      '平均人':'Den_pop','平均gdp':'GDP','居民欧':'Dis_to_sett','forest':'Forest',
-                      'twi':'TWI'}, inplace=True)
-    explainer2 = lime.lime_tabular.LimeTabularExplainer(
-        training_data=X.values,
-        feature_names=X.columns.tolist(),
-        class_names=['No Fire', 'Fire'],
-        mode='classification'
-    )
+    model, explainer, explainer2 = load_resources()
     
     # 页面布局
     main_container = st.container()
     with main_container:
-        main(model, explainer, explainer2)  # 始终显示简介
+        main(model, explainer, explainer2)
     
     with st.sidebar:
-        para_input(model, explainer, explainer2, main_container)  # 输入控件在侧边栏
+        para_input(model, explainer, explainer2, main_container)
