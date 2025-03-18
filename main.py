@@ -124,7 +124,13 @@ if __name__ == "__main__":
                       '坡向': 'Aspect', '铁路欧': 'Dis_to_railway', '公路欧': 'Dis_to_road',
                       '平均人': 'Den_pop', '平均gdp': 'GDP', '居民欧': 'Dis_to_sett', 'forest': 'Forest',
                       'twi': 'TWI'}, inplace=True)
-
+    explainer2 = lime.lime_tabular.LimeTabularExplainer(
+        training_data=X.values,
+        feature_names=X.columns.tolist(),
+        class_names=['No Fire', 'Fire'],
+        mode='classification',
+        random_state=42
+    )
     if "features" not in st.session_state:
         st.session_state["features"] = {}
 
