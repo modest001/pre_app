@@ -100,3 +100,33 @@ def main(model, explainer, explainer2):
         fig2 = exp2.as_pyplot_figure()
         st.pyplot(fig2)
         st.write("LIME图中绿色代表该因子对预测有正向贡献，红色代表该因子对预测有负向贡献。")
+
+
+if __name__ == "__main__":
+    model = joblib.load('lgbml.pkl')
+    explainer=shap.TreeExplainer(model)
+
+    data1=pd.read_excel('./数据删.xls')
+    columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
+    X = data1.drop(columns=columns_to_drop)
+    X.rename(columns={'TEM':'Da_AVGTEM', 'TMN':'Da_MINTEM', 'TMX':'Da_MAXTEM', 'PRE':'Da_PRE', 
+                      'WIN':'Da_AVGWIN', 'PRS':'Da_AVGPRS','GST':'Da_AVGGST','WINMAX':'Da_MAXWIN',
+                      'GSTMAX':'Da_MAXGST','RHU':'Da_AVGRH','高程':'Elevation', '坡度':'Slope',
+                      '坡向':'Aspect','铁路欧':'Dis_to_railway','公路欧':'Dis_to_road',
+                      '平均人':'Den_pop','平均gdp':'GDP','居民欧':'Dis_to_sett','forest':'Forest',
+                      'twi':'TWI'}, inplace=True)
+        
+    explainer2 = lime.lime_tabular.LimeTabularExplainer(
+        training_data=X.values,
+        feature_names=X.columns.tolist(),
+        class_names=['No Fire', 'Fire'],
+        mode='classification',
+        random_state=42
+    )
+    if "features" not in st.session_state:
+        st.session_state["features"] = {}
+    
+    ct = st.container()
+    with st.sidebar:
+        para_input(model, explainer, explainer2, ct)
+    # main(model, explainer, explainer2)
