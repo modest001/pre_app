@@ -103,15 +103,11 @@ def main(model, explainer, explainer2):
 
 
 if __name__ == "__main__":
-    # 固定全局随机种子
-    import numpy as np
-    import random
-    np.random.seed(42)
-    random.seed(42)
-
+    # 加载模型和预处理管道
     model = joblib.load('lgbml.pkl')
-    explainer = shap.TreeExplainer(model)
+    ct = joblib.load('preprocessor.pkl')  # 确保已保存预处理管道
 
+    # 加载数据
     data1 = pd.read_excel('./数据删.xls')
     columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
     X = data1.drop(columns=columns_to_drop)
@@ -140,15 +136,8 @@ if __name__ == "__main__":
         'twi': 'TWI'
     }, inplace=True)
     
-    # 后续预处理和解释器初始化保持不变
-    X_processed = ct.transform(X)
-    categorical_features = [10, 17]
-    explainer2 = lime.lime_tabular.LimeTabularExplainer(
-        training_data=X_processed,
-        feature_names=ct.get_feature_names_out(),
-        categorical_features=categorical_features,
-        discretize_continuous=False,
-        class_names=['No Fire', 'Fire'],
-        mode='classification',
-        random_state=42
-    )
+    expected_columns = ct.get_feature_names_out()
+    X = X[expected_columns]
+
+    # 执行转换
+    X_processed = ct.transform(X)  # 此时应无错误
