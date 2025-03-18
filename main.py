@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import lime
 from PIL import Image
 
-@st.fragment
+
 def main(model, explainer, explainer2):
     # 页面标题和简介
     st.title("四川云南省森林火灾预测", anchor=False)
