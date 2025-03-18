@@ -7,7 +7,7 @@ import lime
 from PIL import Image
 
 
-@st.fragment
+
 def para_input(model, explainer, explainer2, ct):
     st.header("请在下方输入相应指标👇", anchor=False)
     feature_names = ['Da_AVGTEM', 'Da_PRE', 'Da_AVGRH', 'Da_AVGWIN', 'Da_AVGPRS', 'SSD', 'Da_MAXWIN', 
@@ -53,7 +53,6 @@ def para_input(model, explainer, explainer2, ct):
             main(model, explainer, explainer2)
 
 
-@st.fragment
 def main(model, explainer, explainer2):
     # 添加简介部分
     st.title("四川云南省森林火灾预测系统")
