@@ -91,11 +91,13 @@ def main(model, explainer, explainer2):
 
         # LIME解释
         st.subheader("LIME局部解释", anchor=False)
-        exp2 = explainer2.explain_instance(
+        def generate_lime_explanation(features):
+            exp2 = explainer2.explain_instance(
             data_row=st.session_state["features"].values[0],
             predict_fn=model.predict_proba,
             num_features=11
             )
+        return exp2
         
         fig2 = exp2.as_pyplot_figure()
         st.pyplot(fig2)
