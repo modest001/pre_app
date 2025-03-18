@@ -102,7 +102,6 @@ def main(model, explainer, explainer2):
         st.write("LIME图中绿色代表该因子对预测有正向贡献，红色代表该因子对预测有负向贡献。")
 
 
-# 修改后的初始化部分
 if __name__ == "__main__":
     # 固定全局随机种子
     import numpy as np
@@ -116,15 +115,34 @@ if __name__ == "__main__":
     data1 = pd.read_excel('./数据删.xls')
     columns_to_drop = ['LONGITUDE','LATITUDE','火点','TMX','TMN','GST']
     X = data1.drop(columns=columns_to_drop)
-    X.rename(columns={...}, inplace=True)  # 保持原有重命名逻辑
-
-    # 预处理训练数据
+    
+    # 修复列名映射
+    X.rename(columns={
+        'TEM': 'Da_AVGTEM',
+        'TMN': 'Da_MINTEM', 
+        'TMX': 'Da_MAXTEM',
+        'PRE': 'Da_PRE',
+        'WIN': 'Da_AVGWIN',
+        'PRS': 'Da_AVGPRS',
+        'GST': 'Da_AVGGST',
+        'WINMAX': 'Da_MAXWIN',
+        'GSTMAX': 'Da_MAXGST',
+        'RHU': 'Da_AVGRH',
+        '高程': 'Elevation',  # 确认此处是否需要修正为 'Elevation'
+        '坡度': 'Slope',
+        '坡向': 'Aspect',
+        '铁路欧': 'Dis_to_railway',
+        '公路欧': 'Dis_to_road',
+        '平均人': 'Den_pop',
+        '平均gdp': 'GDP',
+        '居民欧': 'Dis_to_sett',
+        'forest': 'Forest',
+        'twi': 'TWI'
+    }, inplace=True)
+    
+    # 后续预处理和解释器初始化保持不变
     X_processed = ct.transform(X)
-
-    # 获取分类变量索引（假设Aspect和Forest在预处理后的位置为10和17）
     categorical_features = [10, 17]
-
-    # 初始化LIME解释器
     explainer2 = lime.lime_tabular.LimeTabularExplainer(
         training_data=X_processed,
         feature_names=ct.get_feature_names_out(),
@@ -134,19 +152,3 @@ if __name__ == "__main__":
         mode='classification',
         random_state=42
     )
-
-# 修改后的预测函数
-def predict_fn(x):
-    x_df = pd.DataFrame(x, columns=ct.get_feature_names_out())
-    return model.predict_proba(x_df)
-
-# 修改后的main函数
-def main(model, explainer, explainer2):
-    features_processed = ct.transform(st.session_state["features"])
-    exp2 = explainer2.explain_instance(
-        data_row=features_processed[0],
-        predict_fn=predict_fn,
-        num_features=11
-    )
-    fig2 = exp2.as_pyplot_figure()
-    st.pyplot(fig2)
