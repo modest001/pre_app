@@ -10,11 +10,11 @@ from PIL import Image
 st.title("四川和云南省森林火灾风险预测")
 st.subheader("关于模型")
 st.write(
-    "该模型的内部验证结果显示,其ROC曲线下面积(AUC)为 0.908 (95%CI: 0.82-0.933)，表明该模型具有很强的预测性能，校准曲线和决策曲线分析表明该模型具有预测森林火灾的能力。"
+    "该模型的内部验证结果显示,其ROC曲线下面积(AUC)为 0.962，表明该模型具有很强的预测性能，森林火灾风险等级分析表明该模型能够有效的划分森林火险区。"
 )
 st.subheader("网页计算器指南")
 st.write(
-    "计算器由三个主要部分组成:第一部分的左侧边栏允许用户输入相关参数并选择模型变量，第二部分显示院内森林火灾的预测概率。第三部分提供了详细的模型信息，包括使用SHAP和LIME进行的局部解释，为预测结果提供解释。希望本指南能帮助您有效利用我们的预测计算器。"
+    "计算器由三个主要部分组成:第一部分的左侧边栏允许用户输入相关参数变量，第二部分显示对此样本森林火灾的预测概率。第三部分提供了详细的模型信息，包括使用SHAP和LIME进行的局部解释，为预测结果提供解释。希望本指南能帮助您有效利用我们的预测计算器。"
 )
 
 @st.fragment
@@ -94,24 +94,31 @@ def main(model, explainer, explainer2):
                 feature_names=st.session_state["features"].columns
             )
             fig, _ = plt.subplots(figsize=(8,5))  # 调整图形大小
-            shap.waterfall_plot(exp[0], max_display=8)  # 减少显示的特征数量
+            shap.waterfall_plot(exp[0], max_display=11)  # 减少显示的特征数量
             plt.tight_layout()
             st.pyplot(fig)
-            st.caption("SHAP瀑布图中红色代表正向贡献，蓝色为负向贡献，长度表示影响大小。")
+            st.caption("上图显示了SHAP瀑布图，其中红色代表该因子对模型有正向贡献，蓝色代表该因子对模型有负向贡献，长度表示增加（正值）或减少（负值）相对于基线的预测。")
 
         # LIME解释
         with col2:
             st.markdown("**LIME局部解释**")
+            explainer2 = lime.lime_tabular.LimeTabularExplainer(
+                     training_data=X.values,
+                     feature_names=X.columns.tolist(),
+                     class_names=['No Fire', 'Fire'],
+                     mode='classification',
+                     random_state=42
+            )
             exp2 = explainer2.explain_instance(
                 st.session_state["features"].values[0], 
                 model.predict_proba, 
-                num_features=8  # 减少显示的特征数量
+                num_features=11  # 减少显示的特征数量
             )
             fig2 = exp2.as_pyplot_figure()
             fig2.set_size_inches(8,5)  # 调整图形大小
             plt.tight_layout()
             st.pyplot(fig2)
-            st.caption("LIME图中绿色为正向贡献，红色为负向贡献。")
+            st.caption("上图显示了LIME图，绿色代表该因子对预测有正向贡献，红色代表该因子对预测有负向贡献。")
 
 if __name__ == "__main__":
     model = joblib.load('lgbml.pkl')
