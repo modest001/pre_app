@@ -81,29 +81,37 @@ def main(model, explainer, explainer2):
         st.subheader("预测结果", anchor=False)
         st.write(f'预测结果为：{types[fire_type[0]]}，概率为{round(predicted_proba[fire_type[0]], 2)}。')
         
-        # SHAP解释
-        st.subheader("SHAP局部解释", anchor=False)
-        shap_values = explainer.shap_values(st.session_state["features"])
-        exp = shap.Explanation(
-            shap_values, 
-            explainer.expected_value, 
-            st.session_state["features"],
-            feature_names=st.session_state["features"].columns
-        )
-        fig, _ = plt.subplots()
-        shap.waterfall_plot(exp[0], max_display=11)
-        st.pyplot(fig)
-        st.write("SHAP瀑布图中红色代表正向贡献，蓝色为负向贡献，长度表示影响大小。")
+        st.subheader("模型解释", anchor=False)
+        col1, col2 = st.columns(2)  # 创建并排的两列
         
+        with col1:
+            st.markdown("**SHAP局部解释**")
+            shap_values = explainer.shap_values(st.session_state["features"])
+            exp = shap.Explanation(
+                shap_values, 
+                explainer.expected_value, 
+                st.session_state["features"],
+                feature_names=st.session_state["features"].columns
+            )
+            fig, _ = plt.subplots(figsize=(8,5))  # 调整图形大小
+            shap.waterfall_plot(exp[0], max_display=8)  # 减少显示的特征数量
+            plt.tight_layout()
+            st.pyplot(fig)
+            st.caption("SHAP瀑布图中红色代表正向贡献，蓝色为负向贡献，长度表示影响大小。")
+
         # LIME解释
-        exp2 = explainer2.explain_instance(
-            st.session_state["features"].values[0], 
-            model.predict_proba, 
-            num_features=11
-        )
-        fig2 = exp2.as_pyplot_figure()
-        st.pyplot(fig2)
-        st.write("LIME图中绿色为正向贡献，红色为负向贡献。")
+        with col2:
+            st.markdown("**LIME局部解释**")
+            exp2 = explainer2.explain_instance(
+                st.session_state["features"].values[0], 
+                model.predict_proba, 
+                num_features=8  # 减少显示的特征数量
+            )
+            fig2 = exp2.as_pyplot_figure()
+            fig2.set_size_inches(8,5)  # 调整图形大小
+            plt.tight_layout()
+            st.pyplot(fig2)
+            st.caption("LIME图中绿色为正向贡献，红色为负向贡献。")
 
 if __name__ == "__main__":
     model = joblib.load('lgbml.pkl')
