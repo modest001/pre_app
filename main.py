@@ -7,7 +7,7 @@ import lime
 from PIL import Image
 
 # 静态内容在页面加载时显示
-st.title("四川和云南省森林火灾风险预测")
+st.title("四川和云南省森林火灾危险预测")
 st.subheader("关于模型")
 st.write(
     "该模型的内部验证结果显示,其ROC曲线下面积(AUC)为 0.962，表明该模型具有很强的预测性能，森林火灾风险等级分析表明该模型能够有效的划分森林火险区。"
