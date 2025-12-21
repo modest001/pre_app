@@ -72,6 +72,7 @@ def check_password():
             st.markdown("**作者**: 周魁斌")
             st.markdown("**版本**: 1.0")
             st.markdown("**功能**: 四川和云南省森林火灾危险预测")
+            st.markdown("**联系方式**: 532342926@qq.com")  # 添加联系方式
         
         st.markdown("---")
         
@@ -88,6 +89,7 @@ def check_password():
         # 提示信息
         st.caption("ℹ️ 请输入密码访问系统")
         st.caption("⚠️ 如需访问权限，请联系：周魁斌")
+        st.caption("📧 邮箱：532342926@qq.com")  # 再次添加联系方式
         
         # 调试信息（正式使用时可以删除）
         if st.checkbox("显示调试信息"):
@@ -95,7 +97,7 @@ def check_password():
             st.info(f"正确密码是: {CORRECT_PASSWORD}")
     
     st.markdown("---")
-    st.markdown("<p style='text-align: center; color: #666;'>© 2024 南京工业大学 周魁斌</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #666;'>© 2024 南京工业大学 周魁斌 | 邮箱：532342926@qq.com</p>", unsafe_allow_html=True)
     
     st.stop()
     return False
@@ -166,7 +168,7 @@ st.write("**邮箱**: 532342926@qq.com")
 
 # 页脚
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #888;'>南京工业大学 森林火灾预测系统 v1.0 © 2024</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888;'>南京工业大学 森林火灾预测系统 v1.0 © 2024 | 联系方式：532342926@qq.com</p>", unsafe_allow_html=True)
 
 @st.fragment
 def para_input(model, explainer, explainer2, ct):
@@ -295,6 +297,7 @@ if __name__ == "__main__":
     ct = st.container()
     with st.sidebar:
         para_input(model, explainer, explainer2, ct)
+
 
 
 
