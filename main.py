@@ -69,7 +69,7 @@ def check_password():
         info_card = st.container(border=True)
         with info_card:
             st.markdown("**单位**: 南京工业大学")
-            st.markdown("**作者**: 刘之扬")
+            st.markdown("**作者**: 周魁斌")
             st.markdown("**版本**: 1.0")
             st.markdown("**功能**: 四川和云南省森林火灾危险预测")
         
@@ -87,7 +87,7 @@ def check_password():
         
         # 提示信息
         st.caption("ℹ️ 请输入密码访问系统")
-        st.caption("⚠️ 如需访问权限，请联系：刘之扬")
+        st.caption("⚠️ 如需访问权限，请联系：周魁斌")
         
         # 调试信息（正式使用时可以删除）
         if st.checkbox("显示调试信息"):
@@ -95,7 +95,7 @@ def check_password():
             st.info(f"正确密码是: {CORRECT_PASSWORD}")
     
     st.markdown("---")
-    st.markdown("<p style='text-align: center; color: #666;'>© 2024 南京工业大学 刘之扬</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #666;'>© 2024 南京工业大学 周魁斌</p>", unsafe_allow_html=True)
     
     st.stop()
     return False
@@ -117,7 +117,7 @@ if st.sidebar.button("🚪 退出登录"):
 
 # 主内容区
 st.title("四川和云南省森林火灾危险预测")
-st.markdown("**单位：南京工业大学 | 作者：刘之扬**")
+st.markdown("**单位：南京工业大学 | 作者：周魁斌**")
 
 st.subheader("关于模型")
 st.write(
@@ -161,9 +161,8 @@ st.header("📈 预测结果")
 st.markdown("---")
 st.markdown("### 📞 联系方式")
 st.write("**单位**: 南京工业大学")
-st.write("**作者**: 刘之扬")
-st.write("**邮箱**: [请填写你的邮箱]")
-st.write("**电话**: [请填写你的电话]")
+st.write("**作者**: 周魁斌")
+st.write("**邮箱**: 532342926@qq.com")
 
 # 页脚
 st.markdown("---")
@@ -296,5 +295,6 @@ if __name__ == "__main__":
     ct = st.container()
     with st.sidebar:
         para_input(model, explainer, explainer2, ct)
+
 
 
