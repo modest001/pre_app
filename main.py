@@ -6,8 +6,18 @@ import matplotlib.pyplot as plt
 import lime
 from PIL import Image
 
+# ============================================
+# 系统信息
+# 单位：南京工业大学
+# 作者：刘之扬
+# 创建时间：2024年
+# 版本：1.0
+# ============================================
+
 # 静态内容在页面加载时显示
 st.title("四川和云南省森林火灾危险预测")
+st.markdown("**单位：南京工业大学 | 作者：刘之扬**")  # 添加单位信息
+
 st.subheader("关于模型")
 st.write(
     "该模型的内部验证结果显示,其ROC曲线下面积(AUC)为 0.962，表明该模型具有很强的预测性能，森林火灾危险等级分析表明该模型能够有效的划分森林危险区。"
@@ -16,6 +26,12 @@ st.subheader("网页计算器指南")
 st.write(
     "计算器由三个主要部分组成:第一部分的左侧边栏允许用户输入相关参数变量，第二部分显示对此样本森林火灾的预测概率。第三部分提供了详细的模型信息，包括使用SHAP和LIME进行的局部解释，为预测结果提供解释。希望本指南能帮助您有效利用我们的预测计算器。"
 )
+
+# 如果后面有侧边栏代码，也可以在那里添加
+# with st.sidebar:
+#     st.header("系统信息")
+#     st.write("开发单位：南京工业大学")
+#     st.write("开发人员：刘之扬")
 
 @st.fragment
 def para_input(model, explainer, explainer2, ct):
@@ -144,3 +160,4 @@ if __name__ == "__main__":
     ct = st.container()
     with st.sidebar:
         para_input(model, explainer, explainer2, ct)
+
