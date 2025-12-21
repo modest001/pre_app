@@ -6,32 +6,168 @@ import matplotlib.pyplot as plt
 import lime
 from PIL import Image
 
-# ============================================
-# 系统信息
-# 单位：南京工业大学
-# 作者：刘之扬
-# 创建时间：2024年
-# 版本：1.0
-# ============================================
+# ==================== 密码验证系统 ====================
+st.set_page_config(
+    page_title="森林火灾预测系统",
+    page_icon="🔥",
+    layout="wide"
+)
 
-# 静态内容在页面加载时显示
+# 初始化session状态
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'password_attempts' not in st.session_state:
+    st.session_state.password_attempts = 0
+
+# 设置密码（这里设置为123456）
+CORRECT_PASSWORD = "123456"
+MAX_ATTEMPTS = 5  # 最多尝试次数
+
+def check_password():
+    """密码验证函数"""
+    
+    def password_entered():
+        """检查输入的密码"""
+        entered_password = st.session_state["password_input"]
+        
+        if entered_password == CORRECT_PASSWORD:
+            st.session_state.authenticated = True
+            st.session_state.password_input = ""  # 清除密码
+            st.session_state.password_attempts = 0  # 重置尝试次数
+            st.rerun()
+        else:
+            st.session_state.password_attempts += 1
+            st.error(f"❌ 密码错误！")
+            
+            # 显示剩余尝试次数
+            remaining = MAX_ATTEMPTS - st.session_state.password_attempts
+            if remaining > 0:
+                st.warning(f"剩余尝试次数: {remaining}")
+            else:
+                st.error("⛔ 尝试次数过多，请稍后再试")
+                st.stop()
+    
+    # 如果已经认证
+    if st.session_state.authenticated:
+        return True
+    
+    # 检查尝试次数
+    if st.session_state.password_attempts >= MAX_ATTEMPTS:
+        st.error("⛔ 尝试次数过多，系统已锁定")
+        st.stop()
+    
+    # 显示登录界面
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🔥 森林火灾危险预测系统</h1>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # 创建两列布局
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        # 系统信息卡片
+        st.markdown("### 📋 系统信息")
+        info_card = st.container(border=True)
+        with info_card:
+            st.markdown("**单位**: 南京工业大学")
+            st.markdown("**作者**: 刘之扬")
+            st.markdown("**版本**: 1.0")
+            st.markdown("**功能**: 四川和云南省森林火灾危险预测")
+        
+        st.markdown("---")
+        
+        # 密码输入
+        st.markdown("### 🔐 访问控制")
+        st.text_input(
+            "请输入访问密码",
+            type="password",
+            key="password_input",
+            help="密码提示：123456",
+            on_change=password_entered
+        )
+        
+        # 提示信息
+        st.caption("ℹ️ 请输入密码访问系统")
+        st.caption("⚠️ 如需访问权限，请联系：刘之扬")
+        
+        # 调试信息（正式使用时可以删除）
+        if st.checkbox("显示调试信息"):
+            st.info(f"当前密码尝试次数: {st.session_state.password_attempts}")
+            st.info(f"正确密码是: {CORRECT_PASSWORD}")
+    
+    st.markdown("---")
+    st.markdown("<p style='text-align: center; color: #666;'>© 2024 南京工业大学 刘之扬</p>", unsafe_allow_html=True)
+    
+    st.stop()
+    return False
+
+# 调用密码检查
+check_password()
+
+# ==================== 主程序 ====================
+# 只有密码正确才会执行下面的代码
+
+# 显示当前用户信息
+st.sidebar.success(f"✅ 已登录 | 单位：南京工业大学")
+
+# 登出按钮
+if st.sidebar.button("🚪 退出登录"):
+    st.session_state.authenticated = False
+    st.session_state.password_attempts = 0
+    st.rerun()
+
+# 主内容区
 st.title("四川和云南省森林火灾危险预测")
-st.markdown("**单位：南京工业大学 | 作者：刘之扬**")  # 添加单位信息
+st.markdown("**单位：南京工业大学 | 作者：刘之扬**")
 
 st.subheader("关于模型")
 st.write(
     "该模型的内部验证结果显示,其ROC曲线下面积(AUC)为 0.962，表明该模型具有很强的预测性能，森林火灾危险等级分析表明该模型能够有效的划分森林危险区。"
 )
+
 st.subheader("网页计算器指南")
 st.write(
     "计算器由三个主要部分组成:第一部分的左侧边栏允许用户输入相关参数变量，第二部分显示对此样本森林火灾的预测概率。第三部分提供了详细的模型信息，包括使用SHAP和LIME进行的局部解释，为预测结果提供解释。希望本指南能帮助您有效利用我们的预测计算器。"
 )
 
-# 如果后面有侧边栏代码，也可以在那里添加
-# with st.sidebar:
-#     st.header("系统信息")
-#     st.write("开发单位：南京工业大学")
-#     st.write("开发人员：刘之扬")
+# 添加侧边栏的使用说明
+with st.sidebar:
+    st.header("📖 使用说明")
+    st.info("""
+    1. 在左侧输入相关参数
+    2. 系统会自动计算火灾风险
+    3. 查看下方的分析结果
+    4. 使用完毕后点击退出登录
+    """)
+
+# ==================== 以下是原有的功能代码 ====================
+# 你需要在这里添加原来的预测功能代码
+
+# 示例：创建一个简单的输入表单
+st.sidebar.header("📊 输入参数")
+
+# 这里添加原有的参数输入代码
+# 例如：
+# temperature = st.sidebar.slider("温度", 0, 50, 25)
+# humidity = st.sidebar.slider("湿度", 0, 100, 50)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("**⚠️ 安全提示**: 使用完毕后请及时退出登录")
+
+# 主界面继续原有的功能
+st.header("📈 预测结果")
+
+# 这里添加原有的结果显示代码
+
+st.markdown("---")
+st.markdown("### 📞 联系方式")
+st.write("**单位**: 南京工业大学")
+st.write("**作者**: 刘之扬")
+st.write("**邮箱**: [请填写你的邮箱]")
+st.write("**电话**: [请填写你的电话]")
+
+# 页脚
+st.markdown("---")
+st.markdown("<p style='text-align: center; color: #888;'>南京工业大学 森林火灾预测系统 v1.0 © 2024</p>", unsafe_allow_html=True)
 
 @st.fragment
 def para_input(model, explainer, explainer2, ct):
@@ -160,4 +296,5 @@ if __name__ == "__main__":
     ct = st.container()
     with st.sidebar:
         para_input(model, explainer, explainer2, ct)
+
 
